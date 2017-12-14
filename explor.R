@@ -42,9 +42,9 @@ data_mean <- summarise_each(new_data_grouped,funs = "mean")
 
 barplot(data_mean$Emissions,data_mean$year, main = "Decline in Pollution over the Years",xlab = "Years",ylab = "Mean Of Emission(In Tons)", names = data_mean$year,col=brewer.pal(4,"Spectral"))
 
-#model <- lm(Emissions~year,data = data_mean )
+model <- lm(year~Emissions,data = data_mean )
 
-#bline(model,lty = 4)
+abline(model,lty = 4)
 
 
 
@@ -58,15 +58,56 @@ barplot(data_mean$Emissions,data_mean$year, main = "Decline in Pollution over th
 Maryland_data <- subset.data.frame(new_data,new_data$fips == "24510")
 
 
-
-Maryland_data <- arrange(Maryland_data, desc(Emissions))
-
-barplot(Maryland_data$Emissions,as.factor(Maryland_data$year), main = "Decline in Pollution over the Years",xlab = "Years",ylab = "Mean Of Emission(In Tons)")
+Maryland_data$year <- as.factor(as.character(Maryland_data$year))
 
 
+Maryland_data <- group_by(Maryland_data,year)
+
+Maryland_data_mean <- summarise_each(Maryland_data,funs = "mean")
+
+par(mfrow = C(1,2))
+
+plot(Maryland_data$year,Maryland_data$Emissions, ylim = c(0,5),col=brewer.pal(4,"Spectral"))
+
+model2 <- lm(mean(Emissions)~year,data = Maryland_data )
+
+abline(model2,lty = 3,col = "red")
 
 
- 
+barplot(Maryland_data_mean$year,Maryland_data_mean$Emissions,col=brewer.pal(4,"Spectral"))
+
+
+barplot(Maryland_data_mean$Emissions,Maryland_data_mean$year,col=brewer.pal(4,"Spectral"))
+
+
+
+
+
+#barplot(Maryland_data$Emissions,as.factor(Maryland_data$year), main = "Decline in Pollution over the Years",xlab = "Years",ylab = "Mean Of Emission(In Tons)")
+
+
+#################################################################################################################
+#PLOT 3
+################################################################################################################
+
+#p1 <-ggplot(Maryland_data,aes(x = year,y = Emissions))
+#p1 + geom_boxplot() + facet_wrap(~type)
+
+Maryland_data$year <- as.numeric(as.character(Maryland_data$year))
+Maryland_data_type <- group_by(Maryland_data,year,type)
+
+Maryland_data_type_mean <- summarise_each(Maryland_data_type,funs = 'mean') 
+
+p1 <-ggplot(Maryland_data_type,aes(x = year,y = Emissions,fill = year))
+p1 + geom_boxplot() + facet_wrap(~type)+ geom_smooth(method='lm',formula= Emissions ~year)
+
+p1 <-ggplot(Maryland_data_type,aes(x = year,y = Emissions, color = type))+ geom_point() +geom_smooth(method="lm",lwd = 1,lty = 3, se=TRUE, color="blue") + ylim(0,200)
+p1 + facet_wrap(~type) 
+
+
++ ylim(0,3)
+
+
 
 
 
