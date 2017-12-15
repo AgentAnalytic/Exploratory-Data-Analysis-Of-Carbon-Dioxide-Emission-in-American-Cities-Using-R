@@ -4,6 +4,7 @@ library(ggplot2)
 library(stringr)
 library(outliers)
 library(RColorBrewer)
+library(plyr)
 
 #downloading the file :
 
@@ -96,19 +97,44 @@ barplot(Maryland_data_mean$Emissions,Maryland_data_mean$year,col=brewer.pal(4,"S
 Maryland_data$year <- as.numeric(as.character(Maryland_data$year))
 Maryland_data_type <- group_by(Maryland_data,year,type)
 
+Maryland_data_type_model <- group_by(Maryland_data,type)
+
+
+
+
+
+regressions_data<- ddply(Maryland_data_type_model,"type",regression)
+colnames(regressions_data)<- c("type","slope","status")
+
 Maryland_data_type_mean <- summarise_each(Maryland_data_type,funs = 'mean') 
 
-p1 <-ggplot(Maryland_data_type,aes(x = year,y = Emissions,fill = year))
-p1 + geom_boxplot() + facet_wrap(~type)+ geom_smooth(method='lm',formula= Emissions ~year)
+#p1 <-ggplot(Maryland_data_type,aes(x = year,y = Emissions,fill = year))
+#p1 + geom_boxplot() + facet_wrap(~type)+ geom_smooth(method='lm',formula= Emissions ~year)
 
-p1 <-ggplot(Maryland_data_type,aes(x = year,y = Emissions, color = type))+ geom_point() +geom_smooth(method="lm",lwd = 1,lty = 3, se=TRUE, color="blue") + ylim(0,200)
-p1 + facet_wrap(~type) 
+  p1 <-ggplot(Maryland_data_type,aes(x = year,y = Emissions, color = type,label = Maryland_data_type$fips))+ geom_point()+geom_smooth(method="lm",lwd = 0.3,lty = 5, se=TRUE, color="blue") 
 
+  p1 + facet_wrap(~type)  +  geom_label(data= regressions_data, inherit.aes=FALSE, aes(x = 2002, y = 1000,label=paste("Slope=",slope,"X 10^-3",",Emission Status:",status))) + ggtitle("Linear Regression of (Emissions ~ Year) for each Type of Emission Source(More Negative the Slope implies More Decrease in Emissions,(-)Ve Slope->Decrease in Emissions,(+)Ve Slope-> Increase in Emissions)")
 
-+ ylim(0,3)
-
-
-
+  
+  
+  
+    regression <- function(df) {
+    reg_fun <- lm(formula = df$year ~ df$Emissions)
+    
+    slope <-round(coef(reg_fun)[2], 3) * 1000
+    
+    if (slope < 0) {emission_status <- "Decreased"}
+    
+    if (slope == 0) {emission_status <- "Unchanges"}
+    
+    if (slope > 0) {emission_status <- "Increased"}
+    
+    c(slope,emission_status)
+  }
+  
+  
+  
+   data_test <- subset.data.frame(Maryland_data,type = "ON-ROAD")
 
 
 
